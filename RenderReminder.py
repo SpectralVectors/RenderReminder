@@ -2,7 +2,7 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 3),
+    'version': (0, 1, 4),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Sends an email upon render completion.'
@@ -11,6 +11,7 @@ bl_info = {
 import aud, bpy, smtplib, ssl, datetime
 
 from bpy.props import (StringProperty,
+                       BoolProperty,
                        )
                        
 from bpy.types import (Operator,
@@ -47,6 +48,16 @@ def coinSound():
 class RenderReminderAddonPreferences(AddonPreferences):
     bl_idname = __name__
 
+    sendemail: BoolProperty(
+        name='Send Email Notification?',
+        default=True,
+    )
+
+    playsound: BoolProperty(
+        name='Play Sound Notification?',
+        default=True,
+    )
+
     sender_email: StringProperty(
         name="Send From",
         description=":",
@@ -77,6 +88,9 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row = layout.row()
         row.prop(self, "receiver_email")
         row.operator("renderreminder.send_email", text='Send Test Email')
+        row = layout.row()
+        row.prop(self, "sendemail")
+        row.prop(self, "playsound")
 
 class RR_send_email(Operator):
     """Display example preferences"""
@@ -106,16 +120,18 @@ Subject: {shortfilename} - Render Complete!
 - RenderReminder"""
 
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message)
+        if addon_prefs.sendemail:
+            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message)
+        if addon_prefs.playsound:
+            coinSound()
         return {'FINISHED'}
 
 
 @persistent
 def sendEmail(dummy):
     bpy.ops.renderreminder.send_email()
-    coinSound()
 
 
 classes = (
