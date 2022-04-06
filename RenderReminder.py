@@ -2,13 +2,13 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 5),
+    'version': (0, 1, 7),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Sends an email upon render completion.'
 }
 
-import aud, bpy, smtplib, ssl, datetime
+import aud, bpy, datetime, smtplib, ssl
 
 from bpy.props import (StringProperty,
                        BoolProperty,
@@ -20,6 +20,12 @@ from bpy.types import (Operator,
                        )
 
 from bpy.app.handlers import persistent
+
+from email import encoders
+from email.header import Header
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 device = aud.Device()
 
@@ -79,6 +85,11 @@ class RenderReminderAddonPreferences(AddonPreferences):
         maxlen=1024,
     )
 
+    includerender: BoolProperty(
+        name='Attach Render to Email?',
+        default=True,
+    )
+
     sendemail: BoolProperty(
         name='Send Email Notification?',
         default=True,
@@ -121,6 +132,7 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row.operator("renderreminder.send_email", text='Demo / Test')
         row = layout.row()
         row.prop(self, "sendemail")
+        row.prop(self, "includerender")
         row.prop(self, "playsound")
         row = layout.row()
         row.prop(self, "soundselect")
@@ -146,18 +158,42 @@ class RR_send_email(Operator):
         now = datetime.datetime.now()
         date_time = now.strftime("%H:%M:%S, %m/%d/%Y")
 
-        message = f"""\
-Subject: {shortfilename} - Render Complete!
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+        msg['Subject'] = Header(f'{shortfilename} - Render Complete!', 'utf-8').encode()
+        msg_content = MIMEText(f'{longfilename} finished rendering at {date_time}', 'plain', 'utf-8')
+        # msg.attach(MIMEText(f'<html><body><h1>{shortfilename}</h1>' +
+        #     '<p><img src="cid:0"></p>' +
+        #     '</body></html>', 'html', 'utf-8'))
+        msg.attach(msg_content)
+        
+        if addon_prefs.includerender:
 
-{longfilename} finished rendering at {date_time}
-
-- RenderReminder"""
+            renderfile = bpy.context.scene.render.filepath
+            render = bpy.path.basename(renderfile)
+            with open(renderfile, 'rb') as f:
+                # set attachment mime and file name, the image type is png
+                mime = MIMEBase('image', 'png', filename=render)
+                # add required header data:
+                mime.add_header('Content-Disposition', 'attachment', filename=render)
+                mime.add_header('X-Attachment-Id', '0')
+                mime.add_header('Content-ID', '<0>')
+                # read attachment file content into the MIMEBase object
+                mime.set_payload(f.read())
+                # encode with base64
+                encoders.encode_base64(mime)
+                # add MIMEBase object to MIMEMultipart object
+                msg.attach(mime)
+                f.close()
 
         context = ssl.create_default_context()
+
         if addon_prefs.sendemail:
             with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
                 server.login(sender_email, password)
-                server.sendmail(sender_email, receiver_email, message)
+                server.sendmail(sender_email, receiver_email, msg.as_string())
+
         if addon_prefs.playsound:
             if addon_prefs.soundselect == 'ding':
                 ding()
@@ -167,6 +203,8 @@ Subject: {shortfilename} - Render Complete!
                 file = str(addon_prefs.usersound)
                 sound = aud.Sound(file)
                 handle = device.play(sound)
+
+
         return {'FINISHED'}
 
 
@@ -185,6 +223,8 @@ def register():
     for cls in classes:
         register_class(cls)
     bpy.app.handlers.render_complete.append(sendEmail)
+    property = bpy.context.window_manager.operator_properties_last("render.render")
+    property.write_still = True
 
 
 def unregister():
@@ -192,7 +232,8 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
     bpy.app.handlers.render_complete.remove(sendEmail)
-
+    property = bpy.context.window_manager.operator_properties_last("render.render")
+    property.write_still = False
 
 if __name__ == "__main__":
     register()
