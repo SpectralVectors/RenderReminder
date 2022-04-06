@@ -1,4 +1,4 @@
-![Screenshot](/RRScreenshot.png){:style="display:block; margin-left:auto; margin-right:auto"}
+![Screenshot](/RRScreenshot.png)
 
 # RenderReminder
 Blender Python - Send an email and play a sound when a render is finished!
