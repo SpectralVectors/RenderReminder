@@ -87,7 +87,7 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row.prop(self, "password")
         row = layout.row()
         row.prop(self, "receiver_email")
-        row.operator("renderreminder.send_email", text='Send Test Email')
+        row.operator("renderreminder.send_email", text='Demo / Test')
         row = layout.row()
         row.prop(self, "sendemail")
         row.prop(self, "playsound")
