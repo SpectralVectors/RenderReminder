@@ -2,13 +2,13 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 7),
+    'version': (0, 1, 8),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Sends an email upon render completion.'
 }
 
-import aud, bpy, datetime, smtplib, ssl
+import aud, bpy, datetime, pathlib, smtplib, ssl
 
 from bpy.props import (StringProperty,
                        BoolProperty,
@@ -172,18 +172,15 @@ class RR_send_email(Operator):
 
             renderfile = bpy.context.scene.render.filepath
             render = bpy.path.basename(renderfile)
+            file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
+
             with open(renderfile, 'rb') as f:
-                # set attachment mime and file name, the image type is png
-                mime = MIMEBase('image', 'png', filename=render)
-                # add required header data:
+                mime = MIMEBase('image', file_extension, filename=render)
                 mime.add_header('Content-Disposition', 'attachment', filename=render)
                 mime.add_header('X-Attachment-Id', '0')
                 mime.add_header('Content-ID', '<0>')
-                # read attachment file content into the MIMEBase object
                 mime.set_payload(f.read())
-                # encode with base64
                 encoders.encode_base64(mime)
-                # add MIMEBase object to MIMEMultipart object
                 msg.attach(mime)
                 f.close()
 
@@ -204,14 +201,16 @@ class RR_send_email(Operator):
                 sound = aud.Sound(file)
                 handle = device.play(sound)
 
-
         return {'FINISHED'}
-
 
 @persistent
 def sendEmail(dummy):
     bpy.ops.renderreminder.send_email()
 
+@persistent
+def writeRender(dummy):
+    property = bpy.context.window_manager.operator_properties_last("render.render")
+    property.write_still = True
 
 classes = (
     RenderReminderAddonPreferences,
@@ -223,17 +222,14 @@ def register():
     for cls in classes:
         register_class(cls)
     bpy.app.handlers.render_complete.append(sendEmail)
-    property = bpy.context.window_manager.operator_properties_last("render.render")
-    property.write_still = True
-
+    bpy.app.handlers.depsgraph_update_pre.append(writeRender)
 
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
     bpy.app.handlers.render_complete.remove(sendEmail)
-    property = bpy.context.window_manager.operator_properties_last("render.render")
-    property.write_still = False
+    bpy.app.handlers.depsgraph_update_pre.remove(writeRender)
 
 if __name__ == "__main__":
     register()
