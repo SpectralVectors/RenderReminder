@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="660" height="520" src="/RRScreenshot.png">
+</p>
+
 ![Screenshot](/RRScreenshot.png)
 
 # RenderReminder
