@@ -2,8 +2,6 @@
   <img width="660" height="520" src="/RRScreenshot.png">
 </p>
 
-![Screenshot](/RRScreenshot.png)
-
 # RenderReminder
 Blender Python - Send an email and play a sound when a render is finished!
 
