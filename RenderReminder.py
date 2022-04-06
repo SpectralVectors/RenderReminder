@@ -2,7 +2,7 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 4),
+    'version': (0, 1, 5),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Sends an email upon render completion.'
@@ -12,6 +12,7 @@ import aud, bpy, smtplib, ssl, datetime
 
 from bpy.props import (StringProperty,
                        BoolProperty,
+                       EnumProperty,
                        )
                        
 from bpy.types import (Operator,
@@ -21,9 +22,9 @@ from bpy.types import (Operator,
 from bpy.app.handlers import persistent
 
 device = aud.Device()
-sound = aud.Sound('')
 
 def coinSound():
+    sound = aud.Sound('')
     handle = device.play(
                         sound
                         .triangle(1000)
@@ -44,9 +45,39 @@ def coinSound():
                         .delay(0.1)
                         .limit(0,1)
                         )
+def ding():
+    sound = aud.Sound('')
+    handle = device.play(
+                        sound
+                        .triangle(3000)
+                        .highpass(20)
+                        .lowpass(1000)
+                        .ADSR(0,0.5,1,0)
+                        .fadeout(0,1)
+                        .limit(0,1)
+                        )
+
 
 class RenderReminderAddonPreferences(AddonPreferences):
     bl_idname = __name__
+
+    soundselect: EnumProperty(
+        name='Sound Select',
+        items={
+            ('ding', 'Ding', 'A simple bell sound'),
+            ('coin', 'Coin', 'A Mario-like coin sound'),
+            ('user', 'User', 'Load a custom sound file')
+        },
+        default = 'ding',
+    )
+
+    usersound: StringProperty(
+        name='User Sound',
+        description='Load a custom sound from your computer',
+        subtype='FILE_PATH',
+        default='',
+        maxlen=1024,
+    )
 
     sendemail: BoolProperty(
         name='Send Email Notification?',
@@ -91,6 +122,9 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row = layout.row()
         row.prop(self, "sendemail")
         row.prop(self, "playsound")
+        row = layout.row()
+        row.prop(self, "soundselect")
+        row.prop(self, "usersound")
 
 class RR_send_email(Operator):
     """Display example preferences"""
@@ -125,7 +159,14 @@ Subject: {shortfilename} - Render Complete!
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message)
         if addon_prefs.playsound:
-            coinSound()
+            if addon_prefs.soundselect == 'ding':
+                ding()
+            if addon_prefs.soundselect == 'coin':
+                coinSound()
+            if addon_prefs.soundselect == 'user':
+                file = str(addon_prefs.usersound)
+                sound = aud.Sound(file)
+                handle = device.play(sound)
         return {'FINISHED'}
 
 
