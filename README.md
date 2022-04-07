@@ -1,9 +1,10 @@
+# RenderReminder
+
 <p align="center">
   <img width="660" height="520" src="/RRScreenshot.png">
 </p>
 
-# RenderReminder
-Blender Python - Send an email and play a sound when a render is finished!
+Send an email and play a sound when your Blender render is finished!
 
 This addon uses smtplib to send an email once your render is ready.
 
