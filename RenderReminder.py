@@ -2,10 +2,10 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 8),
+    'version': (0, 1, 9),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
-    'description': 'Sends an email upon render completion.'
+    'description': 'Send an email and play a sound upon render completion.'
 }
 
 import aud, bpy, datetime, pathlib, smtplib, ssl
@@ -68,7 +68,7 @@ class RenderReminderAddonPreferences(AddonPreferences):
     bl_idname = __name__
 
     soundselect: EnumProperty(
-        name='Sound Select',
+        name='Sound',
         items={
             ('ding', 'Ding', 'A simple bell sound'),
             ('coin', 'Coin', 'A Mario-like coin sound'),
@@ -78,7 +78,7 @@ class RenderReminderAddonPreferences(AddonPreferences):
     )
 
     usersound: StringProperty(
-        name='User Sound',
+        name='User',
         description='Load a custom sound from your computer',
         subtype='FILE_PATH',
         default='',
@@ -102,21 +102,21 @@ class RenderReminderAddonPreferences(AddonPreferences):
 
     sender_email: StringProperty(
         name="Send From",
-        description=":",
+        description="The email address used to send the notification / render",
         default="",
         maxlen=1024,
         )
 
     receiver_email: StringProperty(
         name="Send To",
-        description=":",
+        description="The email address(es) you want to receive the notification / render. Multiple emails can be entered, separated by a comma",
         default="",
         maxlen=1024,
         )
 
     password: StringProperty(
         name="Password",
-        description=":",
+        description="The password to the sender's email account",
         default="",
         maxlen=1024,
         subtype='PASSWORD',
@@ -129,7 +129,6 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row.prop(self, "password")
         row = layout.row()
         row.prop(self, "receiver_email")
-        row.operator("renderreminder.send_email", text='Demo / Test')
         row = layout.row()
         row.prop(self, "sendemail")
         row.prop(self, "includerender")
@@ -137,9 +136,11 @@ class RenderReminderAddonPreferences(AddonPreferences):
         row = layout.row()
         row.prop(self, "soundselect")
         row.prop(self, "usersound")
+        row = layout.row()
+        row.operator("renderreminder.send_email", text='Demo / Test', icon='AUTO')
 
 class RR_send_email(Operator):
-    """Display example preferences"""
+    """Test Your Notification Settings"""
     bl_idname = "renderreminder.send_email"
     bl_label = "Send Notification Email"
     bl_options = {'REGISTER', 'UNDO'}
@@ -189,7 +190,7 @@ class RR_send_email(Operator):
         if addon_prefs.sendemail:
             with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
                 server.login(sender_email, password)
-                server.sendmail(sender_email, receiver_email, msg.as_string())
+                server.sendmail(sender_email, receiver_email.split(','), msg.as_string())
 
         if addon_prefs.playsound:
             if addon_prefs.soundselect == 'ding':
