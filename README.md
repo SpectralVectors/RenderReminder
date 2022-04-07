@@ -10,7 +10,13 @@ Sends an email and plays a sound to notify you when your Blender render is finis
 ## How It Works
 This addon uses Python _(smtplib, aud)_ to send an email and play a sound effect once your render is ready.
 
-The addon will also play a short Blender synthesized sound effect when the render is finished. The sound could be one of two internally generated SFX, or you can load your own sound file.
+Blender has a system called App Handlers that run when specific events happen in the application. 
+
+The notification function runs once Blender reports that a render has completed.
+
+The addon will also play a short Blender synthesized sound effect when the render is finished. 
+
+The sound could be one of two internally generated SFX, or you can load your own sound file.
 
 The email and sound notifications can be used separately or in combination, selected via the checkboxes in the addon's preferences.
 
@@ -26,3 +32,5 @@ I signed up for a separate Gmail account with lower security settings to use as 
 You can fork and customize for your own preferred email service.
 
 It will work for images or animations, however, there may be issues with attachment file size limits if you're dealing with video.
+
+FYI: In order to save the images the addon sets Blender's render option (write_still=True), it is set normally False.
