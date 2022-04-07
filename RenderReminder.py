@@ -2,7 +2,7 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 1, 9),
+    'version': (0, 2, 0),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Send an email and play a sound upon render completion.'
@@ -124,23 +124,31 @@ class RenderReminderAddonPreferences(AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
+
+        box = layout.box()
+        label = box.label(text="Email Settings", icon="URL")
+        row = box.row()
         row.prop(self, "sender_email")
         row.prop(self, "password")
-        row = layout.row()
+        row = box.row()
         row.prop(self, "receiver_email")
-        row = layout.row()
+        row = box.row()
         row.prop(self, "sendemail")
         row.prop(self, "includerender")
-        row.prop(self, "playsound")
-        row = layout.row()
+        
+        box = layout.box()
+        label = box.label(text="Sound Settings", icon="SPEAKER")
+        row = box.row()
         row.prop(self, "soundselect")
         row.prop(self, "usersound")
+        row = box.row()
+        row.prop(self, "playsound")
+
         row = layout.row()
-        row.operator("renderreminder.send_email", text='Demo / Test', icon='AUTO')
+        row.operator("renderreminder.send_email", text='Test Your Notification Settings', icon='AUTO')
 
 class RR_send_email(Operator):
-    """Test Your Notification Settings"""
+    """Test your notification settings first to ensure everything works before trusting a long render to it!"""
     bl_idname = "renderreminder.send_email"
     bl_label = "Send Notification Email"
     bl_options = {'REGISTER', 'UNDO'}
