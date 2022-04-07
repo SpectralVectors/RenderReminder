@@ -2,7 +2,7 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 2, 0),
+    'version': (0, 2, 1),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Send an email and play a sound upon render completion.'
@@ -13,6 +13,7 @@ import aud, bpy, datetime, pathlib, smtplib, ssl
 from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
+                       IntProperty,
                        )
                        
 from bpy.types import (Operator,
@@ -100,6 +101,19 @@ class RenderReminderAddonPreferences(AddonPreferences):
         default=True,
     )
 
+    smtp_server: StringProperty(
+        name="SMTP Server",
+        description="The SMTP server your email provider uses",
+        default="smtp.gmail.com",
+        maxlen=1024,
+        )
+
+    port: IntProperty(
+        name="Port",
+        description="The port number required by the server (commonly 465, 587, 995, 25 or 110)",
+        default=465,
+        )
+
     sender_email: StringProperty(
         name="Send From",
         description="The email address used to send the notification / render",
@@ -127,6 +141,10 @@ class RenderReminderAddonPreferences(AddonPreferences):
 
         box = layout.box()
         label = box.label(text="Email Settings", icon="URL")
+        row = box.row()
+        split = row.split(factor=0.8)
+        split.prop(self, "smtp_server")
+        split.prop(self, "port")
         row = box.row()
         row.prop(self, "sender_email")
         row.prop(self, "password")
@@ -156,14 +174,18 @@ class RR_send_email(Operator):
     def execute(self, context):
         preferences = context.preferences
         addon_prefs = preferences.addons[__name__].preferences
+        smtp_server = addon_prefs.smtp_server
+        port = addon_prefs.port
         sender_email = addon_prefs.sender_email
         receiver_email = addon_prefs.receiver_email
         password = addon_prefs.password
 
-        port = 465  # For SSL
-        smtp_server = "smtp.gmail.com"
         shortfilename = bpy.path.display_name_from_filepath(bpy.context.blend_data.filepath)
         longfilename = bpy.path.basename(bpy.context.blend_data.filepath)
+        renderfile = bpy.context.scene.render.filepath
+        render = bpy.path.basename(renderfile)
+        file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
+
         now = datetime.datetime.now()
         date_time = now.strftime("%H:%M:%S, %m/%d/%Y")
 
@@ -171,17 +193,13 @@ class RR_send_email(Operator):
         msg['From'] = sender_email
         msg['To'] = receiver_email
         msg['Subject'] = Header(f'{shortfilename} - Render Complete!', 'utf-8').encode()
-        msg_content = MIMEText(f'{longfilename} finished rendering at {date_time}', 'plain', 'utf-8')
+        msg_content = MIMEText(f'{longfilename} finished rendering {render} at {date_time}', 'plain', 'utf-8')
         # msg.attach(MIMEText(f'<html><body><h1>{shortfilename}</h1>' +
         #     '<p><img src="cid:0"></p>' +
         #     '</body></html>', 'html', 'utf-8'))
         msg.attach(msg_content)
-        
-        if addon_prefs.includerender:
 
-            renderfile = bpy.context.scene.render.filepath
-            render = bpy.path.basename(renderfile)
-            file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
+        if addon_prefs.includerender:
 
             with open(renderfile, 'rb') as f:
                 mime = MIMEBase('image', file_extension, filename=render)
@@ -193,12 +211,15 @@ class RR_send_email(Operator):
                 msg.attach(mime)
                 f.close()
 
+
         context = ssl.create_default_context()
 
         if addon_prefs.sendemail:
+
             with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email.split(','), msg.as_string())
+
 
         if addon_prefs.playsound:
             if addon_prefs.soundselect == 'ding':
