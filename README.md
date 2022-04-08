@@ -7,6 +7,10 @@
 ## What It Does
 Sends an email and plays a sound to notify you when your Blender render is finished!
 
+## How to Install and Use
+
+[Install Guide](https://youtu.be/U2bitCl0p8w)
+
 ## How It Works
 This addon uses Python _(smtplib, aud)_ to send an email and play a sound effect once your render is ready.
 
