@@ -9,6 +9,8 @@ Sends an email and plays a sound to notify you when your Blender render is finis
 
 ## How to Install and Use
 
+Click the image below to view the Install Guide on YouTube:
+
 [![Install and Use](https://img.youtube.com/vi/U2bitCl0p8w/0.jpg)](https://youtu.be/U2bitCl0p8w)
 
 ## How It Works
