@@ -1,5 +1,7 @@
 # RenderReminder
-![Demo GIF](/RRGIF.gif)
+<p align="center">
+  <img width="444" height="250" src="/RRGIF.gif">
+</p>
 
 <p align="center">
   <img width="660" height="520" src="/RRScreenshot.png">
