@@ -2,13 +2,13 @@ bl_info = {
     'name': 'RenderReminder',
     'category': 'Render',
     'author': 'Spectral Vectors',
-    'version': (0, 2, 1),
+    'version': (0, 2, 2),
     'blender': (3, 00, 0),
     'location': 'Addon Preferences',
     'description': 'Send an email and play a sound upon render completion.'
 }
 
-import aud, bpy, datetime, pathlib, smtplib, ssl
+import aud, bpy, datetime, os, pathlib, smtplib, ssl
 
 from bpy.props import (StringProperty,
                        BoolProperty,
@@ -27,42 +27,6 @@ from email.header import Header
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-device = aud.Device()
-
-def coinSound():
-    sound = aud.Sound('')
-    handle = device.play(
-                        sound
-                        .triangle(1000)
-                        .highpass(20)
-                        .lowpass(2000)
-                        .ADSR(0,0.5,1,0)
-                        .fadeout(0.1,0.1)
-                        .limit(0,1)
-                        )
-
-    handle = device.play(
-                        sound
-                        .triangle(1500)
-                        .highpass(20)
-                        .lowpass(2000)
-                        .ADSR(0,0.5,1,0)
-                        .fadeout(0.2,0.2)
-                        .delay(0.1)
-                        .limit(0,1)
-                        )
-def ding():
-    sound = aud.Sound('')
-    handle = device.play(
-                        sound
-                        .triangle(3000)
-                        .highpass(20)
-                        .lowpass(1000)
-                        .ADSR(0,0.5,1,0)
-                        .fadeout(0,1)
-                        .limit(0,1)
-                        )
 
 
 class RenderReminderAddonPreferences(AddonPreferences):
@@ -180,14 +144,20 @@ class RR_send_email(Operator):
         receiver_email = addon_prefs.receiver_email
         password = addon_prefs.password
 
-        shortfilename = bpy.path.display_name_from_filepath(bpy.context.blend_data.filepath)
-        longfilename = bpy.path.basename(bpy.context.blend_data.filepath)
-        renderfile = bpy.context.scene.render.filepath
-        render = bpy.path.basename(renderfile)
-        file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
+        filename = bpy.context.blend_data.filepath
+        
+        if filename == '':
+            filename = 'untitled.blend'
+
+        shortfilename = bpy.path.display_name_from_filepath(filename)
+        longfilename = bpy.path.basename(filename)
 
         now = datetime.datetime.now()
         date_time = now.strftime("%H:%M:%S, %m/%d/%Y")
+        
+        renderfile = bpy.context.scene.render.filepath
+        render = bpy.path.basename(renderfile)
+        file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
 
         msg = MIMEMultipart()
         msg['From'] = sender_email
@@ -200,7 +170,6 @@ class RR_send_email(Operator):
         msg.attach(msg_content)
 
         if addon_prefs.includerender:
-
             with open(renderfile, 'rb') as f:
                 mime = MIMEBase('image', file_extension, filename=render)
                 mime.add_header('Content-Disposition', 'attachment', filename=render)
@@ -211,17 +180,49 @@ class RR_send_email(Operator):
                 msg.attach(mime)
                 f.close()
 
-
-        context = ssl.create_default_context()
-
         if addon_prefs.sendemail:
-
+            context = ssl.create_default_context()
             with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email.split(','), msg.as_string())
 
-
         if addon_prefs.playsound:
+            device = aud.Device()
+
+            def coinSound():
+                sound = aud.Sound('')
+                handle = device.play(
+                                    sound
+                                    .triangle(1000)
+                                    .highpass(20)
+                                    .lowpass(2000)
+                                    .ADSR(0,0.5,1,0)
+                                    .fadeout(0.1,0.1)
+                                    .limit(0,1)
+                                    )
+
+                handle = device.play(
+                                    sound
+                                    .triangle(1500)
+                                    .highpass(20)
+                                    .lowpass(2000)
+                                    .ADSR(0,0.5,1,0)
+                                    .fadeout(0.2,0.2)
+                                    .delay(0.1)
+                                    .limit(0,1)
+                                    )
+            def ding():
+                sound = aud.Sound('')
+                handle = device.play(
+                                    sound
+                                    .triangle(3000)
+                                    .highpass(20)
+                                    .lowpass(1000)
+                                    .ADSR(0,0.5,1,0)
+                                    .fadeout(0,1)
+                                    .limit(0,1)
+                                    )
+
             if addon_prefs.soundselect == 'ding':
                 ding()
             if addon_prefs.soundselect == 'coin':
@@ -232,6 +233,20 @@ class RR_send_email(Operator):
                 handle = device.play(sound)
 
         return {'FINISHED'}
+
+@persistent
+def autoNameRender(dummy):
+    property = bpy.context.window_manager.operator_properties_last("render.render")
+    property.write_still = True
+
+    bpy.context.scene.render.use_render_cache = True
+    
+    if bpy.context.scene.render.filepath == '/tmp\\':
+        now = datetime.datetime.now()
+        rendernamer = now.strftime("%H%M%S")
+        path = '~\Documents\\'
+        filepath = os.path.expanduser(path) + rendernamer + '.' + bpy.context.scene.render.image_settings.file_format
+        bpy.context.scene.render.filepath = filepath
 
 @persistent
 def sendEmail(dummy):
@@ -251,6 +266,8 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
+
+    bpy.app.handlers.load_post.append(autoNameRender)
     bpy.app.handlers.render_complete.append(sendEmail)
     bpy.app.handlers.depsgraph_update_pre.append(writeRender)
 
@@ -258,6 +275,8 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
+
+    bpy.app.handlers.load_post.remove(autoNameRender)
     bpy.app.handlers.render_complete.remove(sendEmail)
     bpy.app.handlers.depsgraph_update_pre.remove(writeRender)
 
