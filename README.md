@@ -32,7 +32,7 @@ The email and sound notifications can be used separately or in combination, sele
 You can add multiple email addresses to the __'Send To:'__ field, separated by commas.
 
 ## Limitations
-__Your render _MUST_ have a name and file extension.__ Blender's default is to render to a temporary directory with no filename. Without a filename and extension, the email will fail to send and you will not be notified.
+The addon will automatically name your render after the time the blend file was opened, and save it in your Documents folder if you do not specify another name and location.
 
 It uses Gmail and you will need to make sure that [Allow less secure apps is set to ON](https://myaccount.google.com/lesssecureapps) to send the messages. 
 
@@ -42,4 +42,4 @@ You can fork and customize for your own preferred email service.
 
 It will work for images or animations, however, there may be issues with attachment file size limits if you're dealing with video.
 
-FYI: In order to save the images the addon sets Blender's render option (write_still=True), it is set normally False.
+FYI: In order to save the images the addon sets Blender's render option (write_still=True), it is set normally False. The same goes for render caching.
