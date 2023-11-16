@@ -154,23 +154,20 @@ class RR_send_email(Operator):
 
         now = datetime.datetime.now()
         date_time = now.strftime("%H:%M:%S, %m/%d/%Y")
-        
+
         renderfile = bpy.context.scene.render.filepath
         render = bpy.path.basename(renderfile)
-        file_extension = pathlib.Path(bpy.context.scene.render.filepath).suffix
+        file_extension = bpy.context.scene.render.file_extension[1:]
 
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = receiver_email
         msg['Subject'] = Header(f'{shortfilename} - Render Complete!', 'utf-8').encode()
         msg_content = MIMEText(f'{longfilename} finished rendering {render} at {date_time}', 'plain', 'utf-8')
-        # msg.attach(MIMEText(f'<html><body><h1>{shortfilename}</h1>' +
-        #     '<p><img src="cid:0"></p>' +
-        #     '</body></html>', 'html', 'utf-8'))
         msg.attach(msg_content)
 
         if addon_prefs.includerender:
-            with open(renderfile, 'rb') as f:
+            with open("%s.%s" % (renderfile, file_extension), 'rb') as f:
                 mime = MIMEBase('image', file_extension, filename=render)
                 mime.add_header('Content-Disposition', 'attachment', filename=render)
                 mime.add_header('X-Attachment-Id', '0')
