@@ -10,20 +10,13 @@ bl_info = {
 }
 
 
-if "bpy" in locals():
-    import importlib
-    import bpy
-    from bpy.app.handlers import persistent
 
-    importlib.reload(preferences)
-    importlib.reload(notification)
-else:
-    import bpy
+import bpy
 
-    from bpy.app.handlers import persistent
+from bpy.app.handlers import persistent
 
-    from .preferences import RenderReminderAddonPreferences
-    from .notification import RR_Notification
+from .preferences import RenderReminderAddonPreferences
+from .notification import RR_Notification
 
 
 classes = (

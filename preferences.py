@@ -16,6 +16,7 @@ class RenderReminderAddonPreferences(AddonPreferences, Injectable):
     bl_idname = __name__
 
     def __init__(self):
+        print(f"[{__name__}]Create Preferences")
         super().__init__()
         self._auto_inject()
 
@@ -27,6 +28,7 @@ class RenderReminderAddonPreferences(AddonPreferences, Injectable):
             print(f"{plugin.__name__} injected")
 
     def draw(self, context):
+        print(f"[{__name__}]Draw Preferences")
         layout = self.layout
 
         # Draw Plugins

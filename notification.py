@@ -7,6 +7,9 @@ from .lib import (
     PluginInterface,
     extract_vars,
 )
+from .plugin import *
+
+plugins = PluginInterface.__subclasses__()
 
 class RR_Notification(Operator):
     """Test your notification settings first to ensure everything works before trusting a long render to it!"""
@@ -28,11 +31,16 @@ class RR_Notification(Operator):
             )
 
     def execute(self, context):
+        print(f"[{__name__}]Sending Notification")
+
         # Get preferences
         prefs = context.preferences
-        addon_prefs: RenderReminderAddonPreferences = prefs.addons[__name__].preferences
+        addon_prefs: RenderReminderAddonPreferences = prefs.addons["RenderReminder"].preferences
 
-        for plugin in self.plugins:
+        # show Vars
+        print(extract_vars(addon_prefs))
+
+        for plugin in plugins:
             if not issubclass(plugin, PluginInterface):
                 continue
 
