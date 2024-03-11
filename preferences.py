@@ -1,34 +1,18 @@
-from bpy.types import (
-    AddonPreferences,
-)
+from bpy.types import AddonPreferences
 
-from .lib import (
-    PluginInterface,
-    Injectable,
-    extract_vars,
-)
+
+from .lib import PluginInterface
 
 from .plugin import *
 
 plugins = PluginInterface.__subclasses__()
 
-class RenderReminderAddonPreferences(AddonPreferences, Injectable):
-    bl_idname = __name__
 
-    def __init__(self):
-        print(f"[{__name__}]Create Preferences")
-        super().__init__()
-        self._auto_inject()
-
-    def _auto_inject(self):
-        for plugin in self.plugins:
-            vars = extract_vars(plugin)
-            for name, value in vars.items():
-                self.inject(f"{plugin.__name__}.{name}", value)
-            print(f"{plugin.__name__} injected")
+class RenderReminderAddonPreferences(*plugins, AddonPreferences):  # type: ignore
+    bl_idname = __package__
 
     def draw(self, context):
-        print(f"[{__name__}]Draw Preferences")
+        print(f"[{__package__}]Draw Preferences")
         layout = self.layout
 
         # Draw Plugins
@@ -37,7 +21,7 @@ class RenderReminderAddonPreferences(AddonPreferences, Injectable):
                 continue
 
             plugin.draw(self, layout)
-        
+
         # Try Sending Notification
         row = layout.row()
         row.operator(

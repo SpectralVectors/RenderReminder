@@ -9,10 +9,9 @@ bl_info = {
     "support": "COMMUNITY",
 }
 
-
+import os, datetime
 
 import bpy
-
 from bpy.app.handlers import persistent
 
 from .preferences import RenderReminderAddonPreferences
@@ -23,6 +22,7 @@ classes = (
     RenderReminderAddonPreferences,
     RR_Notification,
 )
+
 
 @persistent
 def autoNameRender(dummy):
@@ -52,6 +52,7 @@ def sendNotification(dummy):
 def writeRender(dummy):
     property = bpy.context.window_manager.operator_properties_last("render.render")
     property.write_still = True
+
 
 def register():
     from bpy.utils import register_class

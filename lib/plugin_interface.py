@@ -1,8 +1,8 @@
 class PluginInterface:
     @staticmethod
-    def execute(var: list):
+    def execute(preferences, context):
         raise NotImplementedError()
-    
+
     @staticmethod
     def draw(parent, layout):
         raise NotImplementedError()

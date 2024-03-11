@@ -1,3 +1,4 @@
+from bpy.types import AddonPreferences
 from bpy.props import (
     StringProperty,
     BoolProperty,
@@ -14,63 +15,62 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-class EmailPlugin(PluginInterface):
-    email_notification: BoolProperty(
+class EmailPlugin(PluginInterface, AddonPreferences):
+    email_notification: BoolProperty(  # type: ignore
         name="Send Email Notification?",
         default=True,
-    )  # type: ignore
+    )
 
-    include_render_to_mail: BoolProperty(
+    include_render_to_mail: BoolProperty(  # type: ignore
         name="Attach Render to Email?",
         default=True,
-    )  # type: ignore
+    )
 
-    email_smtp_server: StringProperty(
+    email_smtp_server: StringProperty(  # type: ignore
         name="SMTP Server",
         description="The SMTP server your email provider uses",
         default="smtp.gmail.com",
         maxlen=1024,
-    )  # type: ignore
+    )
 
-    email_smtp_port: IntProperty(
+    email_smtp_port: IntProperty(  # type: ignore
         name="Port",
         description="The port number required by the server (commonly 465, 587, 995, 25 or 110)",
         default=465,
-    )  # type: ignore
+    )
 
-    email_sender_email: StringProperty(
+    email_sender_email: StringProperty(  # type: ignore
         name="Send From",
         description="The email address used to send the notification / render",
         default="",
         maxlen=1024,
-    )  # type: ignore
+    )
 
-    email_receivers_email: StringProperty(
+    email_receivers_email: StringProperty(  # type: ignore
         name="Send To",
         description="The email address(es) you want to receive the notification / render. Multiple emails can be entered, separated by a comma",
         default="",
         maxlen=1024,
-    )  # type: ignore
+    )
 
-    email_password: StringProperty(
+    email_password: StringProperty(  # type: ignore
         name="Password",
         description="The password to the sender's email account",
         default="",
         maxlen=1024,
         subtype="PASSWORD",
-    )  # type: ignore
+    )
 
     @staticmethod
-    def execute(vars:list):
+    def execute(preferences, context):
         # Get email settings
-        email_smtp_server = vars["email_smtp_server"]
-        email_smtp_port = vars["email_smtp_port"]
-        email_sender_email = vars["email_sender_email"]
-        email_receivers_email = vars["email_receivers_email"]
-        email_password = vars["email_password"]
-        include_render_to_mail = vars["include_render_to_mail"]
-        email_notification = vars["email_notification"]
-
+        email_smtp_server = preferences.email_smtp_server
+        email_smtp_port = preferences.email_smtp_port
+        email_sender_email = preferences.email_sender_email
+        email_receivers_email = preferences.email_receivers_email
+        email_password = preferences.email_password
+        include_render_to_mail = preferences.include_render_to_mail
+        email_notification = preferences.email_notification
 
         if not email_notification:
             return
@@ -126,7 +126,6 @@ class EmailPlugin(PluginInterface):
                 email_receivers_email.split(","),
                 msg.as_string(),
             )
-    
 
     @staticmethod
     def draw(parent, layout):
@@ -134,13 +133,13 @@ class EmailPlugin(PluginInterface):
         box.label(text="Email Settings", icon="URL")
         row = box.row()
         split = row.split(factor=0.8)
-        split.prop(parent, f"{EmailPlugin.__name__}.email_smtp_server")
-        split.prop(parent, f"{EmailPlugin.__name__}.email_smtp_port")
+        split.prop(parent, "email_smtp_server")
+        split.prop(parent, "email_smtp_port")
         row = box.row()
-        row.prop(parent, f"{EmailPlugin.__name__}.email_sender_email")
-        row.prop(parent, f"{EmailPlugin.__name__}.email_password")
+        row.prop(parent, "email_sender_email")
+        row.prop(parent, "email_password")
         row = box.row()
-        row.prop(parent, f"{EmailPlugin.__name__}.email_receivers_email")
+        row.prop(parent, "email_receivers_email")
         row = box.row()
-        row.prop(parent, f"{EmailPlugin.__name__}.email_notification")
-        row.prop(parent, f"{EmailPlugin.__name__}.include_render_to_mail")
+        row.prop(parent, "email_notification")
+        row.prop(parent, "include_render_to_mail")

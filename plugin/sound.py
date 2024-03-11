@@ -1,3 +1,4 @@
+from bpy.types import AddonPreferences
 from bpy.props import (
     StringProperty,
     BoolProperty,
@@ -7,13 +8,14 @@ import aud
 
 from ..lib import PluginInterface
 
-class SoundPlugin(PluginInterface):
-    sound_notification: BoolProperty(
+
+class SoundPlugin(PluginInterface, AddonPreferences):
+    sound_notification: BoolProperty(  # type: ignore
         name="Play Sound Notification?",
         default=True,
-    )  # type: ignore
+    )
 
-    sound_select: EnumProperty(
+    sound_select: EnumProperty(  # type: ignore
         name="Sound",
         items={
             ("ding", "Ding", "A simple bell sound"),
@@ -21,18 +23,18 @@ class SoundPlugin(PluginInterface):
             ("custom", "Custom", "Load a custom sound file"),
         },
         default="ding",
-    )  # type: ignore
+    )
 
-    user_sound: StringProperty(
+    user_sound: StringProperty(  # type: ignore
         name="User",
         description="Load a custom sound from your computer",
         subtype="FILE_PATH",
         default="",
         maxlen=1024,
-    )  # type: ignore
+    )
 
     @staticmethod
-    def execute(vars:list):
+    def execute(preferences, context):
         device = aud.Device()
 
         def play_sound(frequency, lowpass, highpass, fadeout, delay=0):
@@ -47,15 +49,15 @@ class SoundPlugin(PluginInterface):
                 .limit(0, 1)
             )
 
-        if not vars["sound_notification"]:
+        if not preferences.sound_notification:
             return
 
-        if vars["sound_select"] == "ding":
+        if preferences.sound_select == "ding":
             play_sound(3000, 1000, 20, 1)
-        if vars["sound_select"] == "coin":
+        if preferences.sound_select == "coin":
             play_sound(1500, 2000, 20, 0.2, 0.1)
-        if vars["sound_select"] == "custom":
-            sound_file = str(vars["user_sound"])
+        if preferences.sound_select == "custom":
+            sound_file = str(preferences.user_sound)
             sound = aud.Sound(sound_file)
             device.play(sound)
 
@@ -64,7 +66,7 @@ class SoundPlugin(PluginInterface):
         box = layout.box()
         box.label(text="Sound Settings", icon="SPEAKER")
         row = box.row()
-        row.prop(parent, f"{SoundPlugin.__name__}.sound_select")
-        row.prop(parent, f"{SoundPlugin.__name__}.user_sound")
+        row.prop(parent, "sound_select")
+        row.prop(parent, "user_sound")
         row = box.row()
-        row.prop(parent, f"{SoundPlugin.__name__}.sound_notification")
+        row.prop(parent, "sound_notification")
