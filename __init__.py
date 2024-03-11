@@ -15,7 +15,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 from .preferences import RenderReminderAddonPreferences
-from .notification import RR_Notification
+from .notifications import RR_Notification
 
 
 classes = (
