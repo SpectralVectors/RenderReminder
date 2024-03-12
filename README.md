@@ -1,5 +1,6 @@
 # RenderReminder
 
+<!-- Top Shield -->
 <a name="readme-top"></a>
 
 <center>
@@ -17,6 +18,7 @@
   <img width="660" height="520" src="./RRScreenshot.png">
 </div>
 
+<!-- About the project -->
 ## What It Does
 
 Sends an email and plays a sound to notify you when your Blender render is finished!
