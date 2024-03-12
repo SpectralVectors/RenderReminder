@@ -12,14 +12,10 @@ class RenderReminderAddonPreferences(*plugins, AddonPreferences):  # type: ignor
     bl_idname = __package__
 
     def draw(self, context):
-        print(f"[{__package__}]Draw Preferences")
         layout = self.layout
 
         # Draw Plugins
         for plugin in plugins:
-            if not issubclass(plugin, PluginInterface):
-                continue
-
             plugin.draw(self, layout)
 
         # Try Sending Notification
